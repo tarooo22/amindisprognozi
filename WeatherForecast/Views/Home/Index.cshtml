@@ -1,0 +1,253 @@
+﻿@{
+    ViewData["Title"] = "ამინდის პროგნოზი";
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewData["Title"]</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="styles.css"> 
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            background: url('/images/waether.jpg') no-repeat center center fixed;
+            background-size: cover;
+            font-family: 'Arial', sans-serif;
+            color: #fff;
+        }
+
+        .container {
+            margin-top: 50px;
+        }
+
+        .input-group {
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            border-radius: 5px;
+        }
+
+        #submitCity {
+            background-color: #007bff;
+            border-color: #007bff;
+            color: white;
+        }
+
+            #submitCity:hover {
+                background-color: #0056b3;
+                border-color: #0056b3;
+            }
+
+        #videoContainer {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin: auto;
+            overflow: hidden;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+        }
+
+        #videoPlayer {
+            width: 100%;
+            height: auto;
+            display: block;
+            border-radius: 10px;
+        }
+
+        #videoOverlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #fff;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+            #videoOverlay:hover {
+                background-color: rgba(0, 0, 0, 0.7);
+            }
+
+        #photoGallery {
+            margin-top: 20px;
+            overflow-x: auto;
+            white-space: nowrap;
+            padding: 10px 0;
+        }
+
+        .photo {
+            display: inline-block;
+            width: 300px;
+            height: 200px;
+            margin-right: 10px;
+            border-radius: 10px;
+            overflow: hidden;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+        }
+
+            .photo img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                border-radius: 10px;
+            }
+    </style>
+</head>
+<body>
+    <div class="container text-center">
+        <h3>მოგესალმებით ამინდის პროგნოზის გვერდზე!</h3>
+        <h4>ჩაწერეთ თქვენი ქალაქის სახელი დასაწყებად!</h4>
+        <br />
+        
+        <form id="searchForm" class="m-auto col-md-6 col-lg-4 p-0">
+            <div class="input-group mb-3">
+                <input id="searchInput" type="text" class="form-control" placeholder="იძებნება ქალაქი...">
+                <div class="input-group-append">
+                    <button id="submitSearch" class="btn btn-primary"><i class="fa fa-search"></i> ძებნა</button>
+                </div>
+            </div>
+        </form>
+
+        <div id="forecastInfo" class="mt-4">
+            
+        </div>
+
+        
+        <div id="videoContainer">
+            <video id="videoPlayer" controls autoplay>
+                <source src="video/1844-150885307.mp4" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+            <div id="videoOverlay">
+                Click to Play Video
+            </div>
+        </div>
+
+        
+        <div id="photoGallery">
+            <div class="photo">
+                <img src="/images/1.jpg" alt="Photo 1">
+            </div>
+            <div class="photo">
+                <img src="/images/4.jpg" alt="Photo 2">
+            </div>
+            <div class="photo">
+                <img src="/images/3.jpg" alt="Photo 3">
+            </div>
+            
+        </div>
+    </div>
+
+    <script>
+        $('#submitSearch').on('click', function (e) {
+            e.preventDefault();
+            LoadForecast($('#searchInput').val());
+        });
+
+        $('#searchInput').keypress(function (e) {
+            if (e.which == 13) {
+                e.preventDefault();
+                LoadForecast($('#searchInput').val());
+                return false;
+            }
+        });
+
+        $('#videoOverlay').click(function () {
+            var video = document.getElementById('videoPlayer');
+            if (video.paused) {
+                video.play();
+                $('#videoOverlay').fadeOut();
+            } else {
+                video.pause();
+                $('#videoOverlay').fadeIn();
+            }
+        });
+
+        function LoadForecast(city) {
+            var link = "@Url.Action("ForecastInformationVC", "Home", new { city = "-1" })";
+            if (city && city.length > 0) {
+                link = link.replace("-1", city);
+            }
+            link = link.replace("amp;", "");
+            $("#forecastInfo").load(link, function () {
+                LoadChart();
+            });
+        }
+
+        function LoadChart() {
+            var items = [], options = [];
+
+            $('#forecastData tbody tr td:nth-child(1)').each(function () {
+                options.push($(this).text());
+            });
+            $('#forecastData tbody tr td:nth-child(3)').each(function () {
+                items.push($(this).text().substring(0, $(this).text().length - 3));
+            });
+
+            if (items.length > 0) {
+                var ctx = document.getElementById('myChart').getContext('2d');
+                var myChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: options,
+                        datasets: [{
+                            label: 'Temperature (°C)',
+                            data: items,
+                            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Weather Forecast Chart',
+                                font: {
+                                    size: 20
+                                }
+                            },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false
+                            }
+                        },
+                        hover: {
+                            mode: 'nearest',
+                            intersect: true
+                        },
+                        scales: {
+                            x: {
+                                display: true,
+                                title: {
+                                    display: true,
+                                    text: 'Date Time'
+                                }
+                            },
+                            y: {
+                                display: true,
+                                title: {
+                                    display: true,
+                                    text: 'Temperature (°C)'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+    </script>
+</body>
+</html>

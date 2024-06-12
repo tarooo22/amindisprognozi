@@ -1,0 +1,143 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - ამინდის პროგნოზი</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" />
+    <link rel="stylesheet" href="~/lib/font-awesome/css/all.min.css" />
+
+    <style>
+        body {
+            background: url('/images/waether.jpg') no-repeat center center fixed;
+            background-size: cover;
+            font-family: 'Arial', sans-serif;
+            color: #000000;
+            padding-top: 20px;
+        }
+
+        .container {
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            color: #007bff;
+        }
+
+        .text-muted {
+            color: #000000;
+        }
+
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+
+            .btn-primary:hover {
+                background-color: #0069d9;
+                border-color: #0062cc;
+            }
+
+        
+        .weather-img {
+            max-width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8">
+                <h1 class="mt-4">@Model.Title</h1>
+                <p class="text-muted">Published on @DateTime.Now.ToString("MMMM dd, yyyy - HH:mm:ss")</p>
+                <p>@Model.Content</p>
+
+                <a href="@Url.Action("Index", "Blog")" class="btn btn-primary">უკან დაბრუნება</a>
+            </div>
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">ამინდის პროგნოზი</h5>
+                        <div id="weatherInfo">
+                            <p class="card-text">Loading weather...</p>
+                            <img src="" class="weather-img" id="weatherImg" alt="Weather Image">
+                        </div>
+                        <a href="#" id="checkWeatherBtn" class="btn btn-primary">შეამოწმე ამინდი</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        
+        function fetchWeatherData() {
+            var apiKey = 'a587a63cd4dc4082f8779618baf0f8d0';
+            var city = 'Georgia'; 
+            var apiUrl = `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${apiKey}`;
+
+            fetch(apiUrl)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Weather data:', data);
+                    var weatherInfoDiv = document.getElementById('weatherInfo');
+                    var weatherImg = document.getElementById('weatherImg');
+                    var weatherCard = document.querySelector('.card');
+
+                    
+                    weatherInfoDiv.innerHTML = `
+                        <p class="card-text">ტემპერატურა: ${data.main.temp} °C</p>
+                        <p class="card-text">ამინდი: ${data.weather[0].main}</p>
+                    `;
+
+                   
+                    var weatherCondition = data.weather[0].main.toLowerCase();
+                    switch (weatherCondition) {
+                        case 'Cloud':
+                            weatherImg.src = '/images/Clear.jpg'; 
+                            weatherCard.style.backgroundImage = 'url("/images/Clear.jpg")'; 
+                            break;
+                        case 'clouds':
+                            weatherImg.src = '/images/cloudy.jpg'; 
+                            weatherCard.style.backgroundImage = 'url("/images/cloudy.jpg")'; 
+                            break;
+                        default:
+                            weatherImg.src = '/images/Clear.jpg'; 
+                            weatherCard.style.backgroundImage = 'url("/images/Clear.jpg")'; 
+                            break;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching weather data:', error);
+                    var weatherInfoDiv = document.getElementById('weatherInfo');
+                    weatherInfoDiv.innerHTML = `<p class="card-text">Failed to fetch weather data.</p>`;
+                });
+        }
+
+        document.getElementById('checkWeatherBtn').addEventListener('click', function (event) {
+            event.preventDefault();
+            fetchWeatherData();
+        });
+
+        fetchWeatherData(); 
+
+
+
+    </script>
+</body>
+</html>
